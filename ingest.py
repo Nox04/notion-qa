@@ -11,29 +11,20 @@ from langchain.vectorstores import Chroma
 # Here we load in the data in the format that Notion exports it in.
 ps = list(Path("Devbase_Coda/").glob("**/*.pdf"))
 
-data = []
-sources = []
+loader = PyPDFLoader("Devbase_Coda/DevbaseBenefits.pdf")
+data = loader.load()
 
-# Iterate through each PDF file
-for i, p in enumerate(ps):
-    # Load the PDF file using the PyPDFLoader
-    loader = PyPDFLoader(str(p))
-    pages = loader.load_and_split()
-    # Combine the text from all the pages and append it to the data list
-    data.extend(pages)
-
-    # Append the file path to the sources list
-    # sources.extend([{"source": sources[i]}] * len(p))
-
-print(len(data), len(sources))
+# # Iterate through each PDF file
+# for i, p in enumerate(ps):
+#     # Load the PDF file using the PyPDFLoader
+#     loader = PyPDFLoader(str(p))
+#     pages = loader.load()
+#     # Combine the text from all the pages and append it to the data list
+#     data.append(pages)
 # # Here we split the documents, as needed, into smaller chunks.
 # # We do this due to the context limits of the LLMs.
-# docs = []
-# metadatas = []
-# for i, d in enumerate(data):
-#     docs.extend(d)
-#     metadatas.extend([{"source": sources[i]}] * len(d))
-# print(len(docs), len(metadatas))
+text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+documents = text_splitter.split_documents(data)
 
 # # Here we create a vector store from the documents and save it to disk.
 # store = FAISS.from_texts(docs, OpenAIEmbeddings(), metadatas=metadatas)
@@ -42,8 +33,8 @@ print(len(data), len(sources))
 # with open("faiss_store_devbase.pkl", "wb") as f:
 #     pickle.dump(store, f)
 
-persist_directory = 'db'
+persist_directory = 'db_single'
 embeddings = OpenAIEmbeddings()
-vectordb = Chroma.from_documents(data, embedding=embeddings,
+vectordb = Chroma.from_documents(documents, embedding=embeddings,
                                  persist_directory=persist_directory)
 vectordb.persist()

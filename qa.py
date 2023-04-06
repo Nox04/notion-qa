@@ -29,16 +29,31 @@ from langchain.llms import OpenAI  # the LLM model we'll use (CHatGPT)
 # the chat model we'll use (ChatGPT)
 from langchain.chat_models import ChatOpenAI
 
-persist_directory = 'db'
-
+persist_directory = 'db_single'
 embedding = OpenAIEmbeddings()
-
 vectordb = Chroma(persist_directory=persist_directory,
                   embedding_function=embedding)
-
 pdf_qa = ConversationalRetrievalChain.from_llm(ChatOpenAI(temperature=0.9, model_name="gpt-3.5-turbo"),
                                                vectordb.as_retriever(), return_source_documents=True)
-query = "What happens if I feel sick? Must I to work?"
-result = pdf_qa({"question": query, "chat_history": ""})
-print("Answer:")
-print(result["answer"])
+
+chat_history = []
+
+
+def process_input(user_input):
+    result = pdf_qa({"question": user_input, "chat_history": chat_history})
+    print("Answer:")
+    print(result["answer"])
+    chat_history.append((user_input, result["answer"]))
+
+
+def main():
+    while True:
+        user_input = input("")
+
+        if user_input.lower() == 'exit':
+            break
+
+        process_input(user_input)
+
+
+main()
