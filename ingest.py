@@ -42,8 +42,8 @@ print(len(data), len(sources))
 # with open("faiss_store_devbase.pkl", "wb") as f:
 #     pickle.dump(store, f)
 
-
+persist_directory = 'db'
 embeddings = OpenAIEmbeddings()
 vectordb = Chroma.from_documents(data, embedding=embeddings,
-                                 persist_directory=".")
+                                 persist_directory=persist_directory)
 vectordb.persist()
