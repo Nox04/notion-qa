@@ -9,9 +9,9 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.vectorstores import Chroma
 
 # Here we load in the data in the format that Notion exports it in.
-ps = list(Path("Devbase_Coda/").glob("**/*.pdf"))
+# ps = list(Path("bluon/").glob("**/*.pdf"))
 
-loader = PyPDFLoader("Devbase_Coda/DevbaseBenefits.pdf")
+loader = PyPDFLoader("bluon/38BRC-14PD.pdf")
 data = loader.load()
 
 # # Iterate through each PDF file
@@ -33,7 +33,7 @@ documents = text_splitter.split_documents(data)
 # with open("faiss_store_devbase.pkl", "wb") as f:
 #     pickle.dump(store, f)
 
-persist_directory = 'db_single'
+persist_directory = 'db_bluon'
 embeddings = OpenAIEmbeddings()
 vectordb = Chroma.from_documents(documents, embedding=embeddings,
                                  persist_directory=persist_directory)

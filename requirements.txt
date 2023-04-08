@@ -5,3 +5,5 @@ streamlit
 streamlit-chat
 chromadb
 pypdf
+Flask
+flask-cors

@@ -1,25 +1,4 @@
-"""Ask a question to the notion database."""
-# import faiss
-# from langchain import OpenAI
-# from langchain.chains import VectorDBQAWithSourcesChain
-# import pickle
-# import argparse
-
-# parser = argparse.ArgumentParser(description='Ask a question to the notion DB.')
-# parser.add_argument('question', type=str, help='The question to ask the notion DB')
-# args = parser.parse_args()
-
-# # Load the LangChain.
-# index = faiss.read_index("docs.index")
-
-# with open("faiss_store.pkl", "rb") as f:
-#     store = pickle.load(f)
-
-# store.index = index
-# chain = VectorDBQAWithSourcesChain.from_llm(llm=OpenAI(temperature=0), vectorstore=store)
-# result = chain({"question": args.question})
-# print(f"Answer: {result['answer']}")
-# print(f"Sources: {result['sources']}")
+"""Ask a question to the devbase asistant."""
 
 from langchain.document_loaders import PyPDFLoader  # for loading the pdf
 from langchain.embeddings import OpenAIEmbeddings  # for creating embeddings
@@ -28,32 +7,41 @@ from langchain.chains import ConversationalRetrievalChain  # for chatting with t
 from langchain.llms import OpenAI  # the LLM model we'll use (CHatGPT)
 # the chat model we'll use (ChatGPT)
 from langchain.chat_models import ChatOpenAI
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
-persist_directory = 'db_single'
-embedding = OpenAIEmbeddings()
+app = Flask("app")
+CORS(app)
+openai_api_key = "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"
+persist_directory = 'db_bluon'
+embedding = OpenAIEmbeddings(openai_api_key=openai_api_key)
 vectordb = Chroma(persist_directory=persist_directory,
                   embedding_function=embedding)
-pdf_qa = ConversationalRetrievalChain.from_llm(ChatOpenAI(temperature=0.9, model_name="gpt-3.5-turbo"),
+pdf_qa = ConversationalRetrievalChain.from_llm(ChatOpenAI(temperature=0.9, model_name="gpt-3.5-turbo", openai_api_key=openai_api_key),
                                                vectordb.as_retriever(), return_source_documents=True)
 
-chat_history = []
 
-
-def process_input(user_input):
+def process_input(user_input, chat_history):
     result = pdf_qa({"question": user_input, "chat_history": chat_history})
-    print("Answer:")
-    print(result["answer"])
-    chat_history.append((user_input, result["answer"]))
+    return result["answer"]
 
 
-def main():
-    while True:
-        user_input = input("")
+@app.post('/query')
+def query():
+    data = request.get_json()
 
-        if user_input.lower() == 'exit':
-            break
+    if not data or not isinstance(data, dict):
+        return jsonify({"error": "Invalid input"}), 400
 
-        process_input(user_input)
+    history = data.get("history", [])
 
+    chat_history = []
+    for item in history:
+        chat_history.append((item["message"], item["response"]))
 
-main()
+    response = process_input(data["message"], chat_history)
+
+    # Do something with the data here, for example:
+    processed_data = {"response": response}
+
+    return jsonify(processed_data)
